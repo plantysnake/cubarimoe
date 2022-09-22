@@ -16,6 +16,17 @@ let error = '';
 			if(!result || !result[2]) return message('Reader could not understand the given link.', 1)
 			result = '/read/gist/' + result[2];
 			break;
+		case /(raw|gist)\.githubusercontent/.test(text):
+			if (!text.startsWith("http")) {
+				text = "https://" + text;
+			}
+			const url = new URL(text);
+			result = '/read/gist/'
+				+ btoa(`${url.host.split(".")[0]}${url.pathname}`)
+				.replace(/\+/g, "-")
+				.replace(/\//g, "_")
+				.replace(/\=/g, "");
+			break;
 		case (/^[0-9]{5}[0-9]?$/.test(text) || (/nhentai/.test(text) && /\/\b[0-9]+\b/.test(text))):
 			result = /(\/?)(\b[0-9]+\b)/.exec(text);
 			console.log(result)
@@ -36,9 +47,18 @@ let error = '';
 			}
 			result = '/read/mangasee/' + slug_name
 			break 
+		case /reddit\.com/i.test(text):
+			result = /reddit.com\/(?:r|u(?:ser)?)\/(?:[a-z0-9_\-]+)\/comments\/([a-z0-9]+)/i.exec(text);
+			if (!result || !result[1]) result = /reddit.com\/gallery\/([a-z0-9]+)/i.exec(text);
+			if (!result || !result[1]) return message('Reader could not understand the given link.', 1);
+			result = '/read/reddit/' + result[1];
+			break;
 		default:
 			return message('Reader could not understand the given link.', 1)
 			break;
+	}
+	if (!result.endsWith("/")) {
+		result += "/";
 	}
 	if(result) {
 		sbox.classList.add('spin');
